@@ -6,7 +6,7 @@ set -Eeuo pipefail
 
 : "${INPUT_DIR:="/input"}"
 : "${OUTPUT_DIR:="/output"}"
-PY="/app/.venv/bin/python"
+PY="/service/.venv/bin/python"
 
 # Activate the conda env and load FSL env
 #source /opt/conda/bin/activate base
@@ -66,14 +66,14 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   fi
 
   # if venv python not found, search the PATH for another python3 or python
-  PY="/app/.venv/bin/python"
+  PY="/service/.venv/bin/python"
   if [ ! -x "$PY" ]; then
     PY="$(command -v python3 || command -v python)"
-    echo "[WARN] /app/.venv/bin/python not found; using $PY"
+    echo "[WARN] /service/.venv/bin/python not found; using $PY"
   fi
 
   set -x
-  "$PY" /app/run_ieeg_recon.py \
+  "$PY" /service/run_ieeg_recon.py \
     --t1 "$t1" \
     --ct "$ct" \
     --elec "$elec" \

@@ -88,8 +88,8 @@ ENV ITKSNAP_DIR="/itksnap/bin"
 # ---- Revised finished 
 
 # ---- Revised: for debugging Module 3 error
-ENV FREESURFER_HOME=/app/doc/freesurfer
-ENV SUBJECTS_DIR=/app/doc/freesurfer/subjects
+ENV FREESURFER_HOME=/service/doc/freesurfer
+ENV SUBJECTS_DIR=/service/doc/freesurfer/subjects
 # ---- Revised finished 
 
 
@@ -102,8 +102,8 @@ ENV FSL_DIR="/opt/conda"
 ENV FSL_OUTPUT_TYPE="NIFTI_GZ"
     
 
-# Install the project into `/app`
-WORKDIR /app          
+# Install the project into `/service`
+WORKDIR /service          
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -118,21 +118,21 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 #    --mount=type=bind,source=uv.lock,target=uv.lock \
 #    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
 #    uv sync --locked --no-install-project --no-dev
-#COPY pyproject.toml uv.lock /app/
+#COPY pyproject.toml uv.lock /service/
 #RUN uv sync --locked --no-dev 
-COPY requirements.txt /app/requirements.txt
-RUN pip install -r /app/requirements.txt
+COPY requirements.txt /service/requirements.txt
+RUN pip install -r /service/requirements.txt
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
-COPY . /app
+COPY . /service
 #RUN --mount=type=cache,target=/root/.cache/uv \
 #    uv sync --locked --no-dev
 
 # Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/service/.venv/bin:$PATH"
 
 RUN mkdir -p data
-RUN chmod +x /app/main.sh
+RUN chmod +x /service/main.sh
 
-ENTRYPOINT ["/app/main.sh"]
+ENTRYPOINT ["/service/main.sh"]
