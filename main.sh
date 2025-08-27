@@ -4,6 +4,9 @@
 ### SETUP
 set -Eeuo pipefail
 
+: "${INPUT_DIR:="/input"}"
+: "${OUTPUT_DIR:="/output"}"
+
 # Activate the conda env and load FSL env
 #source /opt/conda/bin/activate base
 source $FSLDIR/etc/fslconf/fsl.sh
