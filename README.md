@@ -1,18 +1,33 @@
-# pennsieve-freesurfer application
+This containerized iEEG-recon is adapted from https://github.com/n-sinha/ieeg_recon. It can be run both locally and in [Pennsieve](https://app.pennsieve.io/). 
 
-Ensure that your main file makes use of the `INPUT_DIR` and the `OUTPUT_DIR` ENVIRONMENT variables, to access input files and to write output.
+## To Test Run in Local Docker 
+1. Install Docker in your terminal (Guide: https://www.docker.com/get-started/).
+2. Set up /data folder locally. Populate the folder with the following structure.  
+```
+~/data/
+├── subRID-XXXX/
+│   ├── derivatives/
+│   │   └── freesurfer/
+│   └── ses-clinical01/
+│       └── anat/
+│           └── *T1*.nii.gz
+│       └── ct/
+│           └── *ct*.nii.gz
+│       └── ieeg/
+│           └── *electrodes*.txt
+├── subRID-XXXX/...
+├── subRID-XXXX/...
+├── subRID-XXXX/...
+```
 
-Add additional dependencies to the `Dockerfile`.
+```
+docker buildx build --platform linux/amd64 -t ieeg-recon:dev .
+docker run --rm -it --platform linux/amd64 \
+-v ~/data:/data \ # note the "~/data" should be revised according to how your data is locally stored
+--env-file dev.env \
+ieeg-recon:dev
+```
 
-To run locally:
-
-Run: `docker-compose up --build`
-
-The above will create a `data` directory in your root directory locally.
-
-The example copies files from the `INPUT_DIR` directory to the `OUTPUT_DIR` directory. The directories are set in `dev.env` and are defaulted to `/service/data/input` and `/service/data/ouput` for the input and output directories respectively.
-To test, create `input` and `output` subfolders in the `data` directory. Create a test file (for example `test.txt`) in the `/service/data/input` directory. 
-
-Re-Run: `docker-compose up --build`
-
-The testfile should be copied to the `data/output` directory.
+## To Run in [Pennsieve](https://app.pennsieve.io/)
+1. Make sure you have the Pennsieve account and Workspace set up already. 
+2. 
