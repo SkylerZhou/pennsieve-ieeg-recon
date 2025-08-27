@@ -19,17 +19,15 @@ which c3d || echo "c3d not in PATH"
 which antsRegistration || echo "antsRegistration not in PATH"
 
 echo "Testing executables directly..."
-/usr/local/bin/greedy --help > /dev/null 2>&1 && echo "/usr/local/bin/greedy works" || echo "/usr/local/bin/greedy failed"
 /itksnap/greedy --help > /dev/null 2>&1 && echo "/itksnap/greedy works" || echo "/itksnap/greedy failed"
 greedy --help > /dev/null 2>&1 && echo "greedy in PATH works" || echo "greedy in PATH failed"
 
 ls -la /itksnap/bin/ || echo "/itksnap/bin/ not found"
 ls -la /itksnap/greedy/ || echo "/itksnap/greedy/ not found"
-ls -la /usr/local/bin/greedy || echo "/usr/local/bin/greedy not found"
 
 # Check library dependencies
-echo "Checking ldd for greedy..."
-ldd /usr/local/bin/greedy | head -5
+#echo "Checking ldd for greedy..."
+#ldd /usr/local/bin/greedy | head -5
 
 
 

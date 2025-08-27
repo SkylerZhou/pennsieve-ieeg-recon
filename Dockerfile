@@ -43,6 +43,7 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as runner
 # added for debugging
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    libx11-6 \
     libgomp1 \
     libgcc-s1 \
     libstdc++6 \
@@ -65,31 +66,25 @@ COPY --from=builder /itksnap/c3d /itksnap/c3d
 COPY --from=builder /opt/conda /opt/conda
 
 # added for testing greedy dir for module 2
+ENV ITKSNAP_DIR="/itksnap"
 RUN set -eux; \
     mkdir -p /itksnap/bin; \
-    mkdir -p /usr/local/bin; \
-    # ---- GREEDY ----
+    # greedy: 
     if [ -x /itksnap/greedy/bin/greedy ]; then G=/itksnap/greedy/bin/greedy; \
     elif [ -x /itksnap/greedy/greedy ]; then G=/itksnap/greedy/greedy; \
+    elif [ -x /itksnap/greedy ]; then G=/itksnap/greedy; \
     else echo "greedy not found"; ls -R /itksnap/greedy || true; exit 1; fi; \
-    cp "$G" /usr/local/bin/greedy; \
-    ln -sf /usr/local/bin/greedy /itksnap/bin/greedy; \
-    ln -sf /usr/local/bin/greedy /itksnap/greedy; \
-    chmod +x /usr/local/bin/greedy; \
-    # ---- C3D ----
+    ln -sf "$G" /itksnap/bin/greedy; \
+    ln -sf "$G" /itksnap/greedy; \
+    # c3d
     if [ -x /itksnap/c3d/bin/c3d ]; then C=/itksnap/c3d/bin/c3d; \
     elif [ -x /itksnap/c3d/c3d ]; then C=/itksnap/c3d/c3d; \
+    elif [ -x /itksnap/c3d ]; then C=/itksnap/c3d; \
     else echo "c3d not found"; ls -R /itksnap/c3d || true; exit 1; fi; \
-    cp "$C" /usr/local/bin/c3d; \
-    ln -sf /usr/local/bin/c3d /itksnap/bin/c3d; \
-    ln -sf /usr/local/bin/c3d /itksnap/c3d; \
-    chmod +x /usr/local/bin/c3d; \
-    # ---- ANTs ----
-    cp /ants-2.6.2/bin/antsRegistration /usr/local/bin/; \
-    cp /ants-2.6.2/bin/antsApplyTransforms /usr/local/bin/; \
-    chmod +x /usr/local/bin/ants*
-ENV ITKSNAP_DIR="/itksnap"
-ENV PATH="/usr/local/bin:/itksnap/bin:/opt/conda/bin:${PATH}"
+    ln -sf "$C" /itksnap/bin/c3d \
+    ln -sf "$C" /itksnap/c3d
+RUN ln -sf /itksnap/bin/greedy /itksnap/greedy && \
+    ln -sf /itksnap/bin/c3d    /itksnap/c3d
 
 
 ENV PATH="/ants-2.6.2/bin:$PATH"
