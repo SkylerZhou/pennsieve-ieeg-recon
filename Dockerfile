@@ -73,6 +73,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev
+RUN /opt/conda/bin/pip install -r /app/requirements.txt
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"

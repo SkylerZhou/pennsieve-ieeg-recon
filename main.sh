@@ -1,5 +1,7 @@
-### SETUP
 #!/usr/bin/env bash
+
+
+### SETUP
 set -Eeuo pipefail
 
 # Activate the conda env and load FSL env
@@ -9,6 +11,7 @@ source $FSLDIR/etc/fslconf/fsl.sh
 echo "Start of iEEG-recon processing"
 echo "INPUT_DIR=$INPUT_DIR"
 echo "OUTPUT_DIR=$OUTPUT_DIR"
+
 
 ### FILES AND DIRECTORIES
 # loop through subjects 
@@ -41,6 +44,7 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   for cand in "$ieeg_dir"/*.txt; do
     [ -f "$cand" ] && { elec="$cand"; break; }
   done
+
 
 ### RUN CODE 
   set -x
