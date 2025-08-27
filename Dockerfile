@@ -1,3 +1,4 @@
+# BUILDER STAGE
 # Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as builder
 
@@ -34,6 +35,9 @@ RUN /opt/conda/bin/conda install -n base -y -c $FSL_CONDA_CHANNEL -c conda-forge
     fsl-flirt && \
     /opt/conda/bin/conda clean -afy
 
+
+
+# RUNNER STAGE
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as runner
 
 COPY --from=builder /ants-2.6.2/bin/antsRegistration /ants-2.6.2/bin/antsRegistration
@@ -53,10 +57,8 @@ WORKDIR /app
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
-
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
-
 # Ensure installed tools can be executed out of the box
 ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
@@ -75,4 +77,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["uv", "run", "run_ieeg_recon.py", "-h"]
+RUN mkdir -p data
+RUN chmod +x /app/main.sh
+
+ENTRYPOINT ["/app/main.sh"]
