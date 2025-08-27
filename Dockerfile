@@ -103,12 +103,7 @@ ENV FSL_OUTPUT_TYPE="NIFTI_GZ"
     
 
 # Install the project into `/app`
-WORKDIR /app
-
-COPY pyproject.toml uv.lock /app/
-RUN uv sync --locked --no-dev              # creates /app/.venv and installs pyproject deps
-COPY requirements.txt /app/requirements.txt
-RUN /app/.venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+WORKDIR /app          
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -123,8 +118,10 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 #    --mount=type=bind,source=uv.lock,target=uv.lock \
 #    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
 #    uv sync --locked --no-install-project --no-dev
+#COPY pyproject.toml uv.lock /app/
+#RUN uv sync --locked --no-dev 
 COPY requirements.txt /app/requirements.txt
-RUN /app/.venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install -r /app/requirements.txt
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
