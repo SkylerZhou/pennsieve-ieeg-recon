@@ -2,7 +2,7 @@ This containerized iEEG-recon is adapted from https://github.com/n-sinha/ieeg_re
 
 ## To Test Run in Local Docker 
 1. Install Docker in your terminal (Guide: https://www.docker.com/get-started/).
-2. Set up /data folder locally. Populate the folder with the following structure.  
+2. Set up a /data folder locally. Populate the folder with the following structure.  
 ```
 ~/data/
 ├── subRID-XXXX/
@@ -30,4 +30,3 @@ ieeg-recon:dev
 
 ## To Run in [Pennsieve](https://app.pennsieve.io/)
 1. Make sure you have the Pennsieve account and Workspace set up already. 
-2. 

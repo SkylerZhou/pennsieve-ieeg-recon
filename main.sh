@@ -6,6 +6,7 @@ set -Eeuo pipefail
 
 : "${INPUT_DIR:="/input"}"
 : "${OUTPUT_DIR:="/output"}"
+PY="/app/.venv/bin/python"
 
 # Activate the conda env and load FSL env
 #source /opt/conda/bin/activate base
@@ -52,9 +53,10 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   # ---- Revised: for debugging MODULE 3 error freesurfer
   fs_dir="$subj/derivatives/freesurfer"
 
-  modules="1,2,4"          # default: skip 3 if FS subject not present
-  extra_fs=()              # extra args array
+  modules="1,2,4"  # default: skip 3 if FS subject not present
+  extra_fs=()             
 
+  # if cannot find freesurfer, skip module 3
   if [ -d "$fs_dir" ]; then
     echo "Found FreeSurfer subject dir: $fs_dir"
     modules="1,2,3,4"
@@ -63,6 +65,7 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
     echo "No FreeSurfer subject dir for $sid at: $fs_dir (will run modules $modules)"
   fi
 
+  # if venv python not found, search the PATH for another python3 or python
   PY="/app/.venv/bin/python"
   if [ ! -x "$PY" ]; then
     PY="$(command -v python3 || command -v python)"
@@ -70,7 +73,7 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   fi
 
   set -x
-  /app/.venv/bin/python /app/run_ieeg_recon.py \
+  "$PY" /app/run_ieeg_recon.py \
     --t1 "$t1" \
     --ct "$ct" \
     --elec "$elec" \
@@ -82,8 +85,5 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
 
 done
 
-if ! $found_any; then
-  echo "Failed to find sub-RIDXXXX under $INPUT_DIR."
-fi
 
 echo "[done] iEEG-recon processing complete."

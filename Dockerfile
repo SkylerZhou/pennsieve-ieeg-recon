@@ -40,7 +40,7 @@ RUN /opt/conda/bin/conda install -n base -y -c $FSL_CONDA_CHANNEL -c conda-forge
 # RUNNER STAGE
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as runner
 
-# added for debugging
+# ---- Revised: for debugging
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libx11-6 \
@@ -58,6 +58,7 @@ RUN apt-get update && \
     libc6-dev \
     file \
     && rm -rf /var/lib/apt/lists/*
+# ---- Revised finished 
 
 COPY --from=builder /ants-2.6.2/bin/antsRegistration /ants-2.6.2/bin/antsRegistration
 COPY --from=builder /ants-2.6.2/bin/antsApplyTransforms /ants-2.6.2/bin/antsApplyTransforms
@@ -65,7 +66,6 @@ COPY --from=builder /itksnap/greedy /itksnap/greedy
 
 # ---- Revised: for debugging /itksnap/c3d_affine_tool failed in MODULE 2
 COPY --from=builder /itksnap/c3d /itksnap/c3d
-# make a canonical bin and link all c3d tools your pipeline uses
 RUN mkdir -p /itksnap/bin && \
     ln -sf /itksnap/greedy/bin/greedy           /itksnap/bin/greedy && \
     ln -sf /itksnap/c3d/bin/c3d                 /itksnap/bin/c3d && \
@@ -105,6 +105,11 @@ ENV FSL_OUTPUT_TYPE="NIFTI_GZ"
 # Install the project into `/app`
 WORKDIR /app
 
+COPY pyproject.toml uv.lock /app/
+RUN uv sync --locked --no-dev              # creates /app/.venv and installs pyproject deps
+COPY requirements.txt /app/requirements.txt
+RUN /app/.venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 # Copy from the cache instead of linking since it's a mounted volume
@@ -118,13 +123,14 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 #    --mount=type=bind,source=uv.lock,target=uv.lock \
 #    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
 #    uv sync --locked --no-install-project --no-dev
-RUN pip install -r /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
+RUN /app/.venv/bin/pip install --no-cache-dir -r /app/requirements.txt
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
 COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev
+#RUN --mount=type=cache,target=/root/.cache/uv \
+#    uv sync --locked --no-dev
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"

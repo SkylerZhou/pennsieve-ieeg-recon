@@ -1,8 +1,9 @@
 .git
 .gitignore
 .dockerignore
-*.env
-.docker-compose.yml
-.venv
-__pycache__/
-*.pyc
+.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+demodata
