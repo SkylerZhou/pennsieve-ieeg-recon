@@ -1,23 +1,22 @@
 #!/usr/bin/env bash
-
-
-### SETUP
 set -Eeuo pipefail
 
-: "${INPUT_DIR:="/input"}"
-: "${OUTPUT_DIR:="/output"}"
+# FSL env (best effort)
+if [ -n "${FSLDIR:-}" ] && [ -f "$FSLDIR/etc/fslconf/fsl.sh" ]; then
+  # shellcheck disable=SC1091
+  source "$FSLDIR/etc/fslconf/fsl.sh" || true
+fi
 
-# Activate the conda env and load FSL env
-#source /opt/conda/bin/activate base
-source $FSLDIR/etc/fslconf/fsl.sh
+: "${INPUT_DIR:=/input}"
+: "${OUTPUT_DIR:=/output}"
+mkdir -p "$OUTPUT_DIR" || true
+
+PY="/opt/conda/bin/python"   # <- use conda python that has pandas/etc
 
 echo "Start of iEEG-recon processing"
 echo "INPUT_DIR=$INPUT_DIR"
 echo "OUTPUT_DIR=$OUTPUT_DIR"
 
-
-### FILES AND DIRECTORIES
-# loop through subjects 
 found_any=false
 for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   [ -d "$subj" ] || continue
@@ -27,44 +26,26 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   anat_dir="$subj/ses-clinical01/anat"
   ct_dir="$subj/ses-clinical01/ct"
   ieeg_dir="$subj/ses-clinical01/ieeg"
+  fs_dir="$subj/derivatives/freesurfer"
 
-  # output directory
   out_dir="$OUTPUT_DIR/$sid"
   mkdir -p "$out_dir"
 
-  # select files to use
-  t1=""
-  for cand in "$anat_dir"/*T1*.nii.gz "$anat_dir"/*.nii.gz; do
-    [ -f "$cand" ] && { t1="$cand"; break; }
-  done
+  t1="";  for cand in "$anat_dir"/*T1*.nii.gz "$anat_dir"/*.nii.gz; do [ -f "$cand" ] && { t1="$cand"; break; }; done
+  ct="";  for cand in "$ct_dir"/*.nii.gz "$ct_dir"/*.nii;     do [ -f "$cand" ] && { ct="$cand"; break; }; done
+  elec="";for cand in "$ieeg_dir"/*.txt;                      do [ -f "$cand" ] && { elec="$cand"; break; }; done
 
-  ct=""
-  for cand in "$ct_dir"/*.nii.gz "$ct_dir"/*.nii; do
-    [ -f "$cand" ] && { ct="$cand"; break; }
-  done
-
-  elec=""
-  for cand in "$ieeg_dir"/*.txt; do
-    [ -f "$cand" ] && { elec="$cand"; break; }
-  done
-
-
-  # ---- Revised: for debugging MODULE 3 error freesurfer
-  fs_dir="$subj/derivatives/freesurfer"
-
-  modules="1,2,4"          # default: skip 3 if FS subject not present
-  extra_fs=()              # extra args array
-
+  modules="1,2,4"; extra_fs=()
   if [ -d "$fs_dir" ]; then
     echo "Found FreeSurfer subject dir: $fs_dir"
     modules="1,2,3,4"
     extra_fs=(--freesurfer-dir "$fs_dir")
   else
-    echo "No FreeSurfer subject dir for $sid at: $fs_dir (will run modules $modules)"
+    echo "No FreeSurfer subject dir for $sid at $fs_dir; skipping Module 3"
   fi
 
   set -x
-  /app/.venv/bin/python /app/run_ieeg_recon.py \
+  "$PY" /app/run_ieeg_recon.py \
     --t1 "$t1" \
     --ct "$ct" \
     --elec "$elec" \
@@ -72,12 +53,10 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
     --modules "$modules" \
     "${extra_fs[@]}"
   set +x
-  # ---- End revised
-
 done
 
 if ! $found_any; then
-  echo "Failed to find sub-RIDXXXX under $INPUT_DIR."
+  echo "No sub-RID???? found under $INPUT_DIR. Exiting 0."
 fi
 
 echo "[done] iEEG-recon processing complete."
