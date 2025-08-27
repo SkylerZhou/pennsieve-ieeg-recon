@@ -40,18 +40,67 @@ RUN /opt/conda/bin/conda install -n base -y -c $FSL_CONDA_CHANNEL -c conda-forge
 # RUNNER STAGE
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as runner
 
+# added for debugging
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libgomp1 \
+    libgcc-s1 \
+    libstdc++6 \
+    libc6 \
+    libglib2.0-0 \
+    libsm6 \
+    libice6 \
+    libxext6 \
+    libxrender1 \
+    libfontconfig1 \
+    libgtk-3-0 \
+    libc6-dev \
+    file \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /ants-2.6.2/bin/antsRegistration /ants-2.6.2/bin/antsRegistration
 COPY --from=builder /ants-2.6.2/bin/antsApplyTransforms /ants-2.6.2/bin/antsApplyTransforms
 COPY --from=builder /itksnap/greedy /itksnap/greedy
 COPY --from=builder /itksnap/c3d /itksnap/c3d
 COPY --from=builder /opt/conda /opt/conda
 
+# added for testing greedy dir for module 2
+RUN set -eux; \
+    mkdir -p /itksnap/bin; \
+    mkdir -p /usr/local/bin; \
+    # ---- GREEDY ----
+    if [ -x /itksnap/greedy/bin/greedy ]; then G=/itksnap/greedy/bin/greedy; \
+    elif [ -x /itksnap/greedy/greedy ]; then G=/itksnap/greedy/greedy; \
+    else echo "greedy not found"; ls -R /itksnap/greedy || true; exit 1; fi; \
+    cp "$G" /usr/local/bin/greedy; \
+    ln -sf /usr/local/bin/greedy /itksnap/bin/greedy; \
+    ln -sf /usr/local/bin/greedy /itksnap/greedy; \
+    chmod +x /usr/local/bin/greedy; \
+    # ---- C3D ----
+    if [ -x /itksnap/c3d/bin/c3d ]; then C=/itksnap/c3d/bin/c3d; \
+    elif [ -x /itksnap/c3d/c3d ]; then C=/itksnap/c3d/c3d; \
+    else echo "c3d not found"; ls -R /itksnap/c3d || true; exit 1; fi; \
+    cp "$C" /usr/local/bin/c3d; \
+    ln -sf /usr/local/bin/c3d /itksnap/bin/c3d; \
+    ln -sf /usr/local/bin/c3d /itksnap/c3d; \
+    chmod +x /usr/local/bin/c3d; \
+    # ---- ANTs ----
+    cp /ants-2.6.2/bin/antsRegistration /usr/local/bin/; \
+    cp /ants-2.6.2/bin/antsApplyTransforms /usr/local/bin/; \
+    chmod +x /usr/local/bin/ants*
+ENV ITKSNAP_DIR="/itksnap"
+ENV PATH="/usr/local/bin:/itksnap/bin:/opt/conda/bin:${PATH}"
+
+
 ENV PATH="/ants-2.6.2/bin:$PATH"
 ENV PATH="/itksnap/greedy/bin:$PATH"
 ENV PATH="/itksnap/c3d/bin:$PATH"
 ENV PATH="/opt/conda/bin:$PATH"
 ENV FSLDIR="/opt/conda"
+ENV FSL_DIR="/opt/conda"
+ENV FSL_OUTPUT_TYPE="NIFTI_GZ"
     
+
 # Install the project into `/app`
 WORKDIR /app
 
@@ -73,7 +122,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev
-RUN /opt/conda/bin/pip install -r /app/requirements.txt
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
