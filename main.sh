@@ -12,24 +12,6 @@ echo "Start of iEEG-recon processing"
 echo "INPUT_DIR=$INPUT_DIR"
 echo "OUTPUT_DIR=$OUTPUT_DIR"
 
-# added for debugging
-echo "Checking executable paths..."
-which greedy || echo "greedy not in PATH"
-which c3d || echo "c3d not in PATH"
-which antsRegistration || echo "antsRegistration not in PATH"
-
-echo "Testing executables directly..."
-/itksnap/greedy --help > /dev/null 2>&1 && echo "/itksnap/greedy works" || echo "/itksnap/greedy failed"
-greedy --help > /dev/null 2>&1 && echo "greedy in PATH works" || echo "greedy in PATH failed"
-
-ls -la /itksnap/bin/ || echo "/itksnap/bin/ not found"
-ls -la /itksnap/greedy/ || echo "/itksnap/greedy/ not found"
-
-# Check library dependencies
-#echo "Checking ldd for greedy..."
-#ldd /usr/local/bin/greedy | head -5
-
-
 
 ### FILES AND DIRECTORIES
 # loop through subjects 
@@ -64,14 +46,30 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   done
 
 
-### RUN CODE 
+  # ---- Revised: for debugging MODULE 3 error freesurfer
+  fs_dir="$subj/derivatives/freesurfer"
+
+  modules="1,2,4"          # default: skip 3 if FS subject not present
+  extra_fs=()              # extra args array
+
+  if [ -d "$fs_dir" ]; then
+    echo "Found FreeSurfer subject dir: $fs_dir"
+    modules="1,2,3,4"
+    extra_fs=(--freesurfer-dir "$fs_dir")
+  else
+    echo "No FreeSurfer subject dir for $sid at: $fs_dir (will run modules $modules)"
+  fi
+
   set -x
   /app/.venv/bin/python /app/run_ieeg_recon.py \
     --t1 "$t1" \
     --ct "$ct" \
     --elec "$elec" \
-    --output-dir "$out_dir" 
+    --output-dir "$out_dir" \
+    --modules "$modules" \
+    "${extra_fs[@]}"
   set +x
+  # ---- End revised
 
 done
 

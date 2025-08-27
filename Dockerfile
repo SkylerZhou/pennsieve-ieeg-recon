@@ -62,29 +62,35 @@ RUN apt-get update && \
 COPY --from=builder /ants-2.6.2/bin/antsRegistration /ants-2.6.2/bin/antsRegistration
 COPY --from=builder /ants-2.6.2/bin/antsApplyTransforms /ants-2.6.2/bin/antsApplyTransforms
 COPY --from=builder /itksnap/greedy /itksnap/greedy
+
+# ---- Revised: for debugging /itksnap/c3d_affine_tool failed in MODULE 2
 COPY --from=builder /itksnap/c3d /itksnap/c3d
+# make a canonical bin and link all c3d tools your pipeline uses
+RUN mkdir -p /itksnap/bin && \
+    ln -sf /itksnap/greedy/bin/greedy           /itksnap/bin/greedy && \
+    ln -sf /itksnap/c3d/bin/c3d                 /itksnap/bin/c3d && \
+    ln -sf /itksnap/c3d/bin/c3d_affine_tool     /itksnap/bin/c3d_affine_tool
+# ---- Revised finished 
+
 COPY --from=builder /opt/conda /opt/conda
 
-# added for testing greedy dir for module 2
-ENV ITKSNAP_DIR="/itksnap"
-RUN set -eux; \
-    mkdir -p /itksnap/bin; \
-    # greedy: 
-    if [ -x /itksnap/greedy/bin/greedy ]; then G=/itksnap/greedy/bin/greedy; \
-    elif [ -x /itksnap/greedy/greedy ]; then G=/itksnap/greedy/greedy; \
-    elif [ -x /itksnap/greedy ]; then G=/itksnap/greedy; \
-    else echo "greedy not found"; ls -R /itksnap/greedy || true; exit 1; fi; \
-    ln -sf "$G" /itksnap/bin/greedy; \
-    ln -sf "$G" /itksnap/greedy; \
-    # c3d
-    if [ -x /itksnap/c3d/bin/c3d ]; then C=/itksnap/c3d/bin/c3d; \
-    elif [ -x /itksnap/c3d/c3d ]; then C=/itksnap/c3d/c3d; \
-    elif [ -x /itksnap/c3d ]; then C=/itksnap/c3d; \
-    else echo "c3d not found"; ls -R /itksnap/c3d || true; exit 1; fi; \
-    ln -sf "$C" /itksnap/bin/c3d \
-    ln -sf "$C" /itksnap/c3d
-RUN ln -sf /itksnap/bin/greedy /itksnap/greedy && \
-    ln -sf /itksnap/bin/c3d    /itksnap/c3d
+
+# ---- Revised: for testing greedy dir for MODULE 2
+# After extracting: rename the extracted dir to avoid path clash
+RUN mv /itksnap/greedy /itksnap/greedy_pkg
+# create canonical /itksnap/bin
+RUN mkdir -p /itksnap/bin
+# point both styles to the real binary
+RUN ln -sf /itksnap/greedy_pkg/bin/greedy /itksnap/bin/greedy && \
+    ln -sf /itksnap/greedy_pkg/bin/greedy /itksnap/greedy
+ENV PATH="/itksnap/bin:/ants-2.6.2/bin:/opt/conda/bin:${PATH}"
+ENV ITKSNAP_DIR="/itksnap/bin"
+# ---- Revised finished 
+
+# ---- Revised: for debugging Module 3 error
+ENV FREESURFER_HOME=/app/doc/freesurfer
+ENV SUBJECTS_DIR=/app/doc/freesurfer/subjects
+# ---- Revised finished 
 
 
 ENV PATH="/ants-2.6.2/bin:$PATH"
