@@ -8,7 +8,20 @@ set -Eeuo pipefail
 # Activate the conda env and load FSL env
 source $FSLDIR/etc/fslconf/fsl.sh
 echo "Debug: INPUT_DIR is set to $INPUT_DIR"
-echo "Debug: INPUT_DIR is set to $INPUT_DIR"
+echo "Debug: ONPUT_DIR is set to $ONPUT_DIR"
+
+# Debugging: Check if INPUT_DIR exists and list its contents
+if [ -d "$INPUT_DIR" ]; then
+  echo "Debug: INPUT_DIR exists. Listing contents:"
+  ls -l "$INPUT_DIR"
+else
+  echo "Error: INPUT_DIR does not exist or is not accessible: $INPUT_DIR"
+  exit 1
+fi
+
+# Debugging: Check for directories matching the pattern
+echo "Debug: Checking for directories matching pattern $INPUT_DIR/sub-RID[0-9][0-9][0-9][0-9]:"
+ls -d "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9] 2>/dev/null || echo "No matching directories found."
 
 
 
