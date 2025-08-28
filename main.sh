@@ -35,7 +35,6 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   echo "Output directory: $out_dir"
 
   # preventive coding to fetch all files needed for run_ieeg_recon.py
-  select files to use
   t1=""
   for cand in "$anat_dir"/*T1*.nii.gz "$anat_dir"/*.nii.gz; do
    [ -f "$cand" ] && { t1="$cand"; break; }
