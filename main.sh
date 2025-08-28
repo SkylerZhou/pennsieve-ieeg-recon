@@ -18,6 +18,9 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   [ -d "$subj" ] || continue
   found_any=true
   sid="$(basename "$subj")"
+  
+  echo "Subject file directory: $subj"
+  echo "Subject ID: $sid"
 
   # format input filepath 
   anat_dir="$subj/ses-clinical01/anat"
