@@ -41,23 +41,23 @@ RUN /opt/conda/bin/conda install -n base -y -c $FSL_CONDA_CHANNEL -c conda-forge
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as runner
 
 # ---- Revised: for debugging
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libx11-6 \
-    libgomp1 \
-    libgcc-s1 \
-    libstdc++6 \
-    libc6 \
-    libglib2.0-0 \
-    libsm6 \
-    libice6 \
-    libxext6 \
-    libxrender1 \
-    libfontconfig1 \
-    libgtk-3-0 \
-    libc6-dev \
-    file \
-    && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && \
+#    apt-get install -y --no-install-recommends \
+#    libx11-6 \
+#    libgomp1 \
+#    libgcc-s1 \
+#    libstdc++6 \
+#    libc6 \
+#    libglib2.0-0 \
+#    libsm6 \
+#    libice6 \
+#    libxext6 \
+#    libxrender1 \
+#    libfontconfig1 \
+#    libgtk-3-0 \
+#    libc6-dev \
+#    file \
+#    && rm -rf /var/lib/apt/lists/*
 # ---- Revised finished 
 
 COPY --from=builder /ants-2.6.2/bin/antsRegistration /ants-2.6.2/bin/antsRegistration
