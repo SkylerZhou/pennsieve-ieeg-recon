@@ -6,7 +6,7 @@ services:
       - dev.env
     image: nishant/ieeg_recon
     volumes:
-        - ~/Desktop/data:/data
+        - ~/Desktop/sub-RID0013:/sub-RID0013
     container_name: ieeg_recon
     build:
       context: .

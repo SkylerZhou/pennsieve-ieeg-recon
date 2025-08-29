@@ -10,24 +10,26 @@ source $FSLDIR/etc/fslconf/fsl.sh
 echo "Debug: INPUT_DIR is set to $INPUT_DIR"
 echo "Debug: OUTPUT_DIR is set to $OUTPUT_DIR"
 
-# Debugging: Check if INPUT_DIR exists and list its contents
-if [ -d "$INPUT_DIR" ]; then
-  echo "Debug: INPUT_DIR exists. Listing contents:"
-  ls -l "$INPUT_DIR"
+# Debugging: Check if INPUT_DIR is a single sub-RIDXXXX folder or a parent directory
+if [[ "$(basename "$INPUT_DIR")" =~ sub-RID[0-9]{4} ]]; then
+  echo "Debug: INPUT_DIR is a single sub-RIDXXXX folder: $INPUT_DIR"
+  sub_dirs=("$INPUT_DIR")
 else
-  echo "Error: INPUT_DIR does not exist or is not accessible: $INPUT_DIR"
+  echo "Debug: INPUT_DIR is a parent directory. Checking for sub-RIDXXXX folders."
+  sub_dirs=("$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9])
+fi
+
+# Check if any sub-RIDXXXX directories are found if INPUT_DIR is a parent directory
+if [ -d "${sub_dirs[0]}" ]; then
+  echo "Debug: Found sub-RIDXXXX directories or folder."
+else
+  echo "Error: No sub-RIDXXXX directories found in $INPUT_DIR."
   exit 1
 fi
 
-# Debugging: Check for directories matching the pattern
-echo "Debug: Checking for directories matching pattern $INPUT_DIR/sub-RID[0-9][0-9][0-9][0-9]:"
-ls -d "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9] 2>/dev/null || echo "No matching directories found."
-
-
-
-### LOOP THROUGH SUBJECTS 
+### LOOP THROUGH SUBJECTS
 found_any=false
-for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
+for subj in "${sub_dirs[@]}"; do
   [ -d "$subj" ] || continue
   found_any=true
   sid="$(basename "$subj")"
@@ -41,7 +43,15 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   ieeg_dir="$subj/ses-clinical01/ieeg"
 
   # format output directory
-  out_dir="$OUTPUT_DIR/$sid"
+  if [[ "$(basename "$INPUT_DIR")" =~ sub-RID[0-9]{4} ]]; then
+    # Case 1: INPUT_DIR is a single sub-RIDXXXX folder
+    out_dir="$OUTPUT_DIR"
+  else
+    # Case 2: INPUT_DIR is a parent directory containing sub-RIDXXXX folders
+    out_dir="$OUTPUT_DIR/$sid"
+  fi
+
+  # Create the output directory if it doesn't exist
   mkdir -p "$out_dir"
 
   # DEBUGGING
@@ -98,17 +108,21 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
   set +x
 
   # ---- Debugging: Check output directory contents ----
-if [ -d "$out_dir" ]; then
-  echo "Debug: Output directory exists: $out_dir"
-  echo "Debug: Listing contents of $out_dir:"
-  ls -l "$out_dir/ieeg_recon/"
-else
-  echo "Error: Output directory was not created: $out_dir"
-fi
+  if [ -d "$out_dir" ]; then
+    echo "Debug: Output directory exists: $out_dir"
+    echo "Debug: Listing contents of $out_dir:"
+    ls -l "$out_dir/ieeg_recon/"
+  else
+    echo "Error: Output directory was not created: $out_dir"
+  fi
 
   # ---- End Debugging
-
 done
 
+
+if [ "$found_any" = false ]; then
+  echo "Error: No valid sub-RIDXXXX directories found in $INPUT_DIR."
+  exit 1
+fi
 
 echo "[done] iEEG-recon processing complete."
