@@ -96,6 +96,16 @@ for subj in "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9]; do
     --modules "$modules" \
     "${extra_fs[@]}"
   set +x
+
+  # ---- Debugging: Check output directory contents ----
+if [ -d "$out_dir" ]; then
+  echo "Debug: Output directory exists: $out_dir"
+  echo "Debug: Listing contents of $out_dir:"
+  ls -l "$out_dir/ieeg_recon/"
+else
+  echo "Error: Output directory was not created: $out_dir"
+fi
+
   # ---- End Debugging
 
 done
