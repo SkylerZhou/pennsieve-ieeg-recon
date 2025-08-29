@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # Activate the conda env and load FSL env
 source $FSLDIR/etc/fslconf/fsl.sh
 echo "Debug: INPUT_DIR is set to $INPUT_DIR"
-echo "Debug: ONPUT_DIR is set to $ONPUT_DIR"
+echo "Debug: OUTPUT_DIR is set to $OUTPUT_DIR"
 
 # Debugging: Check if INPUT_DIR exists and list its contents
 if [ -d "$INPUT_DIR" ]; then

@@ -1,6 +1,6 @@
 # BUILDER STAGE
 # Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as builder
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
 
 # Install ANTs
 RUN apt-get update && \
@@ -38,7 +38,7 @@ RUN /opt/conda/bin/conda install -n base -y -c $FSL_CONDA_CHANNEL -c conda-forge
 
 
 # RUNNER STAGE
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim as runner
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS runner
 
 # ---- Revised: for debugging
 #RUN apt-get update && \
