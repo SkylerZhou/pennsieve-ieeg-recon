@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-
-
 ### SETUP
 set -Eeuo pipefail
 
@@ -10,44 +8,35 @@ source $FSLDIR/etc/fslconf/fsl.sh
 echo "Debug: INPUT_DIR is set to $INPUT_DIR"
 echo "Debug: OUTPUT_DIR is set to $OUTPUT_DIR"
 
-# Debugging: Check if INPUT_DIR is a single sub-RIDXXXX folder or a parent directory
-if [[ "$(basename "$INPUT_DIR")" =~ sub-RID[0-9]{4} ]]; then
-  echo "Debug: INPUT_DIR is a single sub-RIDXXXX folder: $INPUT_DIR"
-  sub_dirs=("$INPUT_DIR")
-else
-  echo "Debug: INPUT_DIR is a parent directory. Checking for sub-RIDXXXX folders."
-  sub_dirs=("$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9])
+# Debugging: Check if INPUT_DIR is a parent folder or a single sub-RIDXXXX folder
+if ls "$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9] >/dev/null 2>&1; then
+  # Case 1: If there are any dir or files in INPUT_DIR that match the pattern sub-RIDXXXX
+  echo "Debug: INPUT_DIR bundles up all sub-RIDXXXX. Checking for sub-RIDXXXX folders."
+  in_dir=("$INPUT_DIR"/sub-RID[0-9][0-9][0-9][0-9])
+elif [ -d "$INPUT_DIR/ses-clinical01" ]; then
+  # Case 2: If under INPUT_DIR there is ses-clinical01 folder (INPUT_DIR is potentially renamed)
+  echo "Debug: INPUT_DIR is a single sub-RIDXXXX folder (potentially renamed): $INPUT_DIR"
+  in_dir=("$INPUT_DIR")
 fi
 
-# Check if any sub-RIDXXXX directories are found if INPUT_DIR is a parent directory
-if [ -d "${sub_dirs[0]}" ]; then
-  echo "Debug: Found sub-RIDXXXX directories or folder."
-else
-  echo "Error: No sub-RIDXXXX directories found in $INPUT_DIR."
-  exit 1
-fi
-
-### LOOP THROUGH SUBJECTS
+### SELECT FILES TO BE INPUTED INTO run_ieeg_recon.py
 found_any=false
-for subj in "${sub_dirs[@]}"; do
+for subj in "${in_dir[@]}"; do
   [ -d "$subj" ] || continue
   found_any=true
-  sid="$(basename "$subj")"
-  
-  echo "Subject file directory: $subj"
-  echo "Subject ID: $sid"
 
-  # format input filepath 
-  anat_dir="$subj/ses-clinical01/anat"
-  ct_dir="$subj/ses-clinical01/ct"
-  ieeg_dir="$subj/ses-clinical01/ieeg"
-
-  # format output directory
-  if [[ "$(basename "$INPUT_DIR")" =~ sub-RID[0-9]{4} ]]; then
+  if [[ "${in_dir[@]}" == "$INPUT_DIR" ]]; then
     # Case 1: INPUT_DIR is a single sub-RIDXXXX folder
+    anat_dir="$INPUT_DIR/ses-clinical01/anat"
+    ct_dir="$INPUT_DIR/ses-clinical01/ct"
+    ieeg_dir="$INPUT_DIR/ses-clinical01/ieeg"
     out_dir="$OUTPUT_DIR"
   else
     # Case 2: INPUT_DIR is a parent directory containing sub-RIDXXXX folders
+    sid="$(basename "$subj")"
+    anat_dir="$subj/ses-clinical01/anat"
+    ct_dir="$subj/ses-clinical01/ct"
+    ieeg_dir="$subj/ses-clinical01/ieeg"
     out_dir="$OUTPUT_DIR/$sid"
   fi
 
@@ -60,24 +49,33 @@ for subj in "${sub_dirs[@]}"; do
   echo "iEEG directory: $ieeg_dir"
   echo "Output directory: $out_dir"
 
-  # preventive coding to fetch all files needed for run_ieeg_recon.py
-  t1=""
-  for cand in "$anat_dir"/*T1*.nii.gz "$anat_dir"/*.nii.gz; do
-   [ -f "$cand" ] && { t1="$cand"; break; }
-  done
-  ct=""
-  for cand in "$ct_dir"/*.nii.gz "$ct_dir"/*.nii; do
-   [ -f "$cand" ] && { ct="$cand"; break; }
-  done
-  elec=""
-  for cand in "$ieeg_dir"/*.txt; do
-   [ -f "$cand" ] && { elec="$cand"; break; }
-  done
+  # Set paths for input files
+  t1_files=("$anat_dir"/*.nii.gz)
+  ct_files=("$ct_dir"/*.nii.gz)
+  elec_files=("$ieeg_dir"/*.txt)
 
+  # Check if files exist
+  if [ -e "${t1_files[0]}" ]; then
+    t1="${t1_files[0]}"  
+  else
+    echo "Error: No T1 .nii.gz files found in $anat_dir"
+    exit 1
+  fi
+  if [ -e "${ct_files[0]}" ]; then
+    ct="${ct_files[0]}"  
+  else
+    echo "Error: No CT .nii.gz files found in $ct_dir"
+    exit 1
+  fi
+  if [ -e "${elec_files[0]}" ]; then
+    elec="${elec_files[0]}"  
+  else
+    echo "Error: No electrode .txt files found in $ieeg_dir"
+    exit 1
+  fi
 
   # ---- Debugging: for debugging MODULE 3 error freesurfer
   fs_dir="$subj/derivatives/freesurfer"
-
   modules="1,2,4"  # default: skip 3 if FS subject not present
   extra_fs=()             
 
