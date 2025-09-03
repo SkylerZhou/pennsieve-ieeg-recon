@@ -49,10 +49,9 @@ else
 fi
 
 
-# fetch files directly assuming flat structure and run run_ieeg_recon.py 
-t1="$INPUT_DIR/T1.nii.gz"
-ct="$INPUT_DIR/sub-RID0031_ses-clinical_ct.nii.gz"
-elec="$INPUT_DIR/sub-RID0031_ses-clinical_electrodes.txt"
+t1="$INPUT_DIR/anat/T1.nii.gz"
+ct="$INPUT_DIR/ct/sub-RID0031_ses-clinical_ct.nii.gz"
+elec="$INPUT_DIR/ieeg/sub-RID0031_ses-clinical_electrodes.txt"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -65,6 +64,23 @@ $PY /service/run_ieeg_recon.py \
 set +x
 
 echo "[done] iEEG-recon processing complete."
+
+# # fetch files directly assuming flat structure and run run_ieeg_recon.py 
+# t1="$INPUT_DIR/T1.nii.gz"
+# ct="$INPUT_DIR/sub-RID0031_ses-clinical_ct.nii.gz"
+# elec="$INPUT_DIR/sub-RID0031_ses-clinical_electrodes.txt"
+
+# mkdir -p "$OUTPUT_DIR"
+
+# set -x
+# $PY /service/run_ieeg_recon.py \
+#   --t1 "$t1" \
+#   --ct "$ct" \
+#   --elec "$elec" \
+#   --output-dir "$OUTPUT_DIR"
+# set +x
+
+# echo "[done] iEEG-recon processing complete."
 
 
 
