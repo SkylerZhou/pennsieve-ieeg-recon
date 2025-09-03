@@ -42,6 +42,10 @@ else
       echo "  $folder"
     fi
   done
+  echo "Debug: Listing all files (in case folder is flatten) in $INPUT_DIR:"
+  for item in "$INPUT_DIR"/*; do
+    echo "  $item"
+  done
 fi
 
 
